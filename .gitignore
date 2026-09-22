@@ -1,0 +1,5 @@
+ghdl.exe
+ghdl-*
+*.zip
+*.part*
+test-extract/
