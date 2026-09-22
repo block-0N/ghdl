@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ghdl — 国内可用的 GitHub 多线程下载器</title>
+    <meta name="description" content="专为国内网络环境优化的 GitHub 多线程下载器，支持 Artifact、Run 和 Release，8 线程并发、断点续传、链接过期自动恢复。">
+    <style>
+        :root {
+            --bg: #0a0e14;
+            --bg-soft: #0f141b;
+            --card: #131820;
+            --card-hover: #171d26;
+            --border: #21262d;
+            --border-soft: #1a1f26;
+            --fg: #e6edf3;
+            --fg-dim: #8b949e;
+            --fg-faint: #6e7681;
+            --green: #3fb950;
+            --green-soft: #1a7f37;
+            --blue: #58a6ff;
+            --purple: #bc8cff;
+            --orange: #d29922;
+            --mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Menlo', monospace;
+            --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: var(--sans);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ---------- 背景光晕 ---------- */
+        .glow {
+            position: fixed;
+            top: -300px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(63, 185, 80, .12) 0%, rgba(88, 166, 255, .06) 40%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ---------- 导航 ---------- */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+            background: rgba(10, 14, 20, .8);
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-family: var(--mono);
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--fg);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo::before {
+            content: '';
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            background: var(--green);
+            box-shadow: 0 0 10px rgba(63, 185, 80, .7);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 26px;
+            font-size: 14px;
+        }
+
+        .nav-links a {
+            color: var(--fg-dim);
+            text-decoration: none;
+            transition: color .15s;
+        }
+
+        .nav-links a:hover {
+            color: var(--fg);
+        }
+
+        /* ---------- 布局 ---------- */
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        section {
+            padding: 76px 0;
+        }
+
+        .section-label {
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--green);
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            font-size: 30px;
+            font-weight: 600;
+            letter-spacing: -.02em;
+            margin-bottom: 40px;
+        }
+
+        /* ---------- Hero ---------- */
+        .hero {
+            padding: 88px 0 72px;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            color: var(--fg-dim);
+            border: 1px solid var(--border);
+            background: var(--bg-soft);
+            padding: 6px 14px;
+            border-radius: 999px;
+            margin-bottom: 28px;
+        }
+
+        .hero-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .4;
+            }
+        }
+
+        h1 {
+            font-size: clamp(40px, 7vw, 68px);
+            font-weight: 700;
+            letter-spacing: -.035em;
+            line-height: 1.05;
+            margin-bottom: 22px;
+        }
+
+        h1 .accent {
+            background: linear-gradient(135deg, var(--green) 0%, var(--blue) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-sub {
+            font-size: 18px;
+            color: var(--fg-dim);
+            max-width: 620px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 13px 26px;
+            border-radius: 9px;
+            font-size: 15px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all .16s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--green);
+            color: #04120a;
+        }
+
+        .btn-primary:hover {
+            background: #4ac35c;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(63, 185, 80, .28);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--fg);
+            border-color: var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--card);
+            border-color: #30363d;
+        }
+
+        /* ---------- 终端窗口 ---------- */
+        .terminal {
+            max-width: 780px;
+            margin: 56px auto 0;
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            overflow: hidden;
+            text-align: left;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+        }
+
+        .term-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 15px;
+            background: #161b22;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .term-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+        }
+
+        .term-dot.r {
+            background: #ff5f56;
+        }
+
+        .term-dot.y {
+            background: #ffbd2e;
+        }
+
+        .term-dot.g {
+            background: #27c93f;
+        }
+
+        .term-title {
+            margin-left: 10px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--fg-faint);
+        }
+
+        .term-body {
+            padding: 20px 22px;
+            font-family: var(--mono);
+            font-size: 13.5px;
+            line-height: 1.85;
+            overflow-x: auto;
+        }
+
+        .term-body .prompt {
+            color: var(--green);
+        }
+
+        .term-body .cmd {
+            color: var(--fg);
+        }
+
+        .term-body .out {
+            color: var(--fg-dim);
+        }
+
+        .term-body .ok {
+            color: var(--green);
+        }
+
+        .term-body .hi {
+            color: var(--blue);
+        }
+
+        /* ---------- 下载卡片 ---------- */
+        .dl-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .dl-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 22px;
+            text-decoration: none;
+            color: inherit;
+            transition: all .18s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dl-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(63, 185, 80, .06), transparent 60%);
+            opacity: 0;
+            transition: opacity .18s;
+        }
+
+        .dl-card:hover {
+            background: var(--card-hover);
+            border-color: #30363d;
+            transform: translateY(-2px);
+        }
+
+        .dl-card:hover::after {
+            opacity: 1;
+        }
+
+        .dl-os {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .dl-os svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--fg-dim);
+        }
+
+        .dl-arch {
+            font-family: var(--mono);
+            font-size: 12.5px;
+            color: var(--fg-faint);
+        }
+
+        .dl-size {
+            font-family: var(--mono);
+            font-size: 12.5px;
+            color: var(--green);
+            margin-top: 8px;
+        }
+
+        .dl-loading {
+            color: var(--fg-faint);
+            font-family: var(--mono);
+            font-size: 13px;
+            padding: 20px 0;
+        }
+
+        /* ---------- 特性 ---------- */
+        .feat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .feat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 26px;
+            transition: border-color .18s;
+        }
+
+        .feat:hover {
+            border-color: #30363d;
+        }
+
+        .feat-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 19px;
+            margin-bottom: 16px;
+            background: rgba(63, 185, 80, .1);
+            border: 1px solid rgba(63, 185, 80, .2);
+        }
+
+        .feat h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .feat p {
+            font-size: 14px;
+            color: var(--fg-dim);
+            line-height: 1.65;
+        }
+
+        /* ---------- 用法 ---------- */
+        .usage-item {
+            margin-bottom: 34px;
+        }
+
+        .usage-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .usage-title {
+            font-family: var(--mono);
+            font-size: 14px;
+            color: var(--blue);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .usage-title::before {
+            content: '§';
+            color: var(--fg-faint);
+        }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 16px 18px;
+            font-family: var(--mono);
+            font-size: 13.5px;
+            color: var(--fg);
+            overflow-x: auto;
+            position: relative;
+            line-height: 1.7;
+        }
+
+        .code-block .c {
+            color: var(--fg-faint);
+        }
+
+        .code-block .s {
+            color: var(--purple);
+        }
+
+        .code-block .k {
+            color: var(--green);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--fg-dim);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 11.5px;
+            font-family: var(--sans);
+            cursor: pointer;
+            opacity: 0;
+            transition: all .15s;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            color: var(--fg);
+            border-color: #30363d;
+        }
+
+        /* ---------- 页脚 ---------- */
+        footer {
+            border-top: 1px solid var(--border-soft);
+            padding: 36px 0;
+            margin-top: 40px;
+        }
+
+        .footer-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 13.5px;
+            color: var(--fg-faint);
+        }
+
+        .footer-inner a {
+            color: var(--fg-dim);
+            text-decoration: none;
+        }
+
+        .footer-inner a:hover {
+            color: var(--fg);
+        }
+
+        @media (max-width: 640px) {
+            section {
+                padding: 56px 0;
+            }
+
+            .hero {
+                padding: 60px 0 48px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            h2 {
+                font-size: 24px;
+                margin-bottom: 28px;
+            }
+
+            .term-body {
+                font-size: 12px;
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="glow"></div>
+
+    <nav>
+        <div class="nav-inner">
+            <a href="#" class="logo">ghdl</a>
+            <div class="nav-links">
+                <a href="#download">下载</a>
+                <a href="#features">特性</a>
+                <a href="#usage">用法</a>
+                <a href="https://github.com/block-0N/ghdl" target="_blank" rel="noopener">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ============ Hero ============ -->
+    <header class="hero wrap">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            <span id="latest-tag">v1.0.0</span> · 已发布
+        </div>
+
+        <h1>专为国内网络优化的<br><span class="accent">GitHub 下载器</span></h1>
+
+        <p class="hero-sub">
+            8 线程并发、断点续传、链接过期自动恢复。支持 Actions Artifact、
+            整个 Workflow Run 和 Release 文件，把 GitHub 上那些几十上百 MB 的包，
+            从一小时压缩到几十秒。
+        </p>
+
+        <div class="hero-actions">
+            <a href="#download" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                        d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z" />
+                    <path
+                        d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z" />
+                </svg>
+                立即下载
+            </a>
+            <a href="https://github.com/block-0N/ghdl" target="_blank" rel="noopener" class="btn btn-ghost">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                        d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+                </svg>
+                查看源码
+            </a>
+        </div>
+
+        <div class="terminal">
+            <div class="term-bar">
+                <span class="term-dot r"></span>
+                <span class="term-dot y"></span>
+                <span class="term-dot g"></span>
+                <span class="term-title">PowerShell</span>
+            </div>
+            <div class="term-body">
+                <div><span class="prompt">PS&gt;</span> <span class="cmd">ghdl run block-0N/sharebox 35706551502</span>
+                </div>
+                <div class="out">找到 1 个 artifact</div>
+                <div class="out">=== [1/1] electron-installer (76.3 MB) ===</div>
+                <div class="out">支持分段，使用 <span class="hi">8 线程</span>下载（可断点续传）</div>
+                <div><span class="ok"> 100.0% 76.3/76.3 MB 6793 KB/s</span></div>
+                <div class="ok">完成: electron-installer.zip (76.3 MB, 耗时 13s)</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ============ 下载 ============ -->
+    <section id="download" class="wrap">
+        <div class="section-label">Download</div>
+        <h2>选择你的平台</h2>
+        <div id="downloads" class="dl-grid">
+            <div class="dl-loading">正在获取最新版本…</div>
+        </div>
+    </section>
+
+    <!-- ============ 特性 ============ -->
+    <section id="features" class="wrap">
+        <div class="section-label">Features</div>
+        <h2>为什么用它</h2>
+        <div class="feat-grid">
+            <div class="feat">
+                <div class="feat-icon">⚡</div>
+                <h3>8 线程并发</h3>
+                <p>单连接被限速到 30 KB/s 时，多连接能把总带宽跑满。实测比单线程快 10 到 200 倍。</p>
+            </div>
+            <div class="feat">
+                <div class="feat-icon">🔄</div>
+                <h3>断点续传</h3>
+                <p>分片文件的大小就是进度。中断、崩溃、关窗之后重跑同一条命令，从断点继续。</p>
+            </div>
+            <div class="feat">
+                <div class="feat-icon">🛡️</div>
+                <h3>链接过期自动恢复</h3>
+                <p>GitHub 的临时下载链接几十分钟就失效。收到 403 时自动重新解析，从断点接着下。</p>
+            </div>
+            <div class="feat">
+                <div class="feat-icon">📦</div>
+                <h3>三种下载对象</h3>
+                <p>Actions Artifact、整个 Workflow Run 的全部产物、Release 附件，一条命令全覆盖。</p>
+            </div>
+            <div class="feat">
+                <div class="feat-icon">🌐</div>
+                <h3>代理支持</h3>
+                <p>支持 --proxy 参数，也读取 HTTPS_PROXY 环境变量。有代理时自动走代理。</p>
+            </div>
+            <div class="feat">
+                <div class="feat-icon">🔑</div>
+                <h3>灵活认证</h3>
+                <p>按优先级依次尝试 --token 参数、GITHUB_TOKEN 环境变量、本机 gh 命令。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 用法 ============ -->
+    <section id="usage" class="wrap">
+        <div class="section-label">Usage</div>
+        <h2>三条命令</h2>
+
+        <div class="usage-item">
+            <div class="usage-title">下载单个 Actions Artifact</div>
+            <div class="code-block">
+                <button class="copy-btn">复制</button>
+                <span class="c"># 先查 artifact id</span><br>
+                gh api repos/owner/repo/actions/artifacts --jq <span class="s">'.artifacts[] | {id,
+                    name}'</span><br><br>
+                <span class="c"># 下载</span><br>
+                ghdl owner/repo <span class="k">&lt;artifact_id&gt;</span>
+            </div>
+        </div>
+
+        <div class="usage-item">
+            <div class="usage-title">下载某个 Run 下的全部产物</div>
+            <div class="code-block">
+                <button class="copy-btn">复制</button>
+                ghdl run owner/repo <span class="k">&lt;run_id&gt;</span>
+            </div>
+        </div>
+
+        <div class="usage-item">
+            <div class="usage-title">下载 Release 附件</div>
+            <div class="code-block">
+                <button class="copy-btn">复制</button>
+                <span class="c"># 不写文件名，列出所有附件</span><br>
+                ghdl release owner/repo <span class="k">&lt;tag&gt;</span><br><br>
+                <span class="c"># 写文件名，支持模糊匹配</span><br>
+                ghdl release owner/repo <span class="k">&lt;tag&gt;</span> windows
+            </div>
+        </div>
+
+        <div class="usage-item">
+            <div class="usage-title">可选参数</div>
+            <div class="code-block">
+                <button class="copy-btn">复制</button>
+                --token &lt;token&gt; <span class="c"># 指定 GitHub Token</span><br>
+                --proxy &lt;url&gt; <span class="c"># 指定代理，如 http://127.0.0.1:7890</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 页脚 ============ -->
+    <footer>
+        <div class="footer-inner">
+            <div>ghdl · MIT License</div>
+            <div>
+                <a href="https://github.com/block-0N/ghdl" target="_blank" rel="noopener">GitHub</a>
+                &nbsp;·&nbsp;
+                <a href="https://github.com/block-0N/ghdl/releases" target="_blank" rel="noopener">Releases</a>
+                &nbsp;·&nbsp;
+                <a href="https://github.com/block-0N/ghdl/issues" target="_blank" rel="noopener">Issues</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ---------- 从 GitHub API 拉最新 Release ----------
+        const REPO = 'block-0N/ghdl';
+
+        const PLATFORMS = [
+            { match: 'windows-amd64', os: 'Windows', arch: 'x64', icon: 'windows' },
+            { match: 'darwin-arm64', os: 'macOS', arch: 'Apple Silicon', icon: 'apple' },
+            { match: 'darwin-amd64', os: 'macOS', arch: 'Intel', icon: 'apple' },
+            { match: 'linux-amd64', os: 'Linux', arch: 'x64', icon: 'linux' },
+        ];
+
+        const ICONS = {
+            windows: '<svg viewBox="0 0 16 16"><path d="M0 2.5l6.5-.9v6.4H0V2.5zm7.4-1l8.6-1.2v7.7H7.4V1.5zM0 8.9h6.5v6.4L0 14.4V8.9zm7.4 0H16v7.7l-8.6-1.2V8.9z"/></svg>',
+            apple: '<svg viewBox="0 0 16 16"><path d="M11.2 8.5c0-2 1.6-2.9 1.7-3-.9-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.4 2 2.5 2 1 0 1.4-.6 2.5-.6s1.5.6 2.5.6 1.7-1 2.3-2c.7-1 1-2 1-2.1 0 0-2-.8-2-3.3zM9.3 2.7c.5-.7.9-1.6.8-2.5-.8 0-1.7.5-2.3 1.2-.5.6-.9 1.5-.8 2.4.9.1 1.8-.4 2.3-1.1z"/></svg>',
+            linux: '<svg viewBox="0 0 16 16"><path d="M8 0C6.3 0 5 1.6 5 3.4c0 .7.1 1.2.2 1.7-.8.8-1.7 2.3-2.2 4.1-.3 1.1-.7 1.7-1.3 2.3-.3.3-.4.7-.2 1 .3.5 1 .6 1.7.3.5-.2 1-.6 1.3-1.1.3.6 1 1.4 2 1.9.9.5 1.8.7 2.5.7s1.6-.2 2.5-.7c1-.5 1.7-1.3 2-1.9.3.5.8.9 1.3 1.1.7.3 1.4.2 1.7-.3.2-.3.1-.7-.2-1-.6-.6-1-1.2-1.3-2.3-.5-1.8-1.4-3.3-2.2-4.1.1-.5.2-1 .2-1.7C11 1.6 9.7 0 8 0zM6.5 2.8c-.4 0-.7-.5-.7-1s.3-1 .7-1 .7.5.7 1-.3 1-.7 1zm3 0c-.4 0-.7-.5-.7-1s.3-1 .7-1 .7.5.7 1-.3 1-.7 1z"/></svg>',
+        };
+
+        function fmtSize(bytes) {
+            const mb = bytes / 1024 / 1024;
+            return mb.toFixed(2) + ' MB';
+        }
+
+        async function loadRelease() {
+            const box = document.getElementById('downloads');
+            try {
+                const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+                if (!res.ok) throw new Error('API ' + res.status);
+                const data = await res.json();
+
+                // 更新版本号
+                document.getElementById('latest-tag').textContent = data.tag_name;
+
+                // 匹配平台
+                const cards = [];
+                for (const p of PLATFORMS) {
+                    const asset = data.assets.find(a => a.name.includes(p.match));
+                    if (!asset) continue;
+                    cards.push(`
+        <a class="dl-card" href="${asset.browser_download_url}">
+          <div class="dl-os">${ICONS[p.icon]}${p.os}</div>
+          <div class="dl-arch">${p.arch}</div>
+          <div class="dl-size">${fmtSize(asset.size)} ↓</div>
+        </a>
+      `);
+                }
+
+                if (cards.length === 0) throw new Error('no assets');
+                box.innerHTML = cards.join('');
+            } catch (e) {
+                // API 失败时回退到 Releases 页面
+                box.innerHTML = `
+      <a class="dl-card" href="https://github.com/${REPO}/releases" target="_blank" rel="noopener">
+        <div class="dl-os">前往 Releases 页面</div>
+        <div class="dl-arch">获取最新版本</div>
+        <div class="dl-size">→</div>
+      </a>
+    `;
+            }
+        }
+
+        // ---------- 代码块复制 ----------
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const block = btn.parentElement;
+                // 提取纯文本（去掉按钮本身）
+                const clone = block.cloneNode(true);
+                clone.querySelector('.copy-btn')?.remove();
+                const text = clone.innerText.trim();
+
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.textContent = '已复制';
+                    setTimeout(() => btn.textContent = '复制', 1500);
+                });
+            });
+        });
+
+        loadRelease();
+    </script>
+
+</body>
+
+</html>
