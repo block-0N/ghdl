@@ -324,6 +324,82 @@
             color: var(--blue);
         }
 
+        /* ---------- 下载标签页 ---------- */
+        .dl-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dl-tab {
+            background: none;
+            border: none;
+            color: var(--fg-dim);
+            padding: 10px 18px;
+            font-size: 14px;
+            font-family: var(--sans);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all .15s;
+        }
+
+        .dl-tab:hover {
+            color: var(--fg);
+        }
+
+        .dl-tab.active {
+            color: var(--fg);
+            border-bottom-color: var(--green);
+        }
+
+        .dl-tab svg {
+            width: 15px;
+            height: 15px;
+            fill: currentColor;
+        }
+
+        .dl-tab-panel {
+            display: none;
+        }
+
+        .dl-tab-panel.active {
+            display: block;
+        }
+
+        .dl-hint {
+            color: var(--fg-dim);
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .dl-badge {
+            display: inline-block;
+            font-size: 10.5px;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-family: var(--mono);
+            margin-left: auto;
+            font-weight: 500;
+        }
+
+        .dl-badge.recommended {
+            background: rgba(63, 185, 80, .15);
+            color: var(--green);
+            border: 1px solid rgba(63, 185, 80, .3);
+        }
+
+        .dl-badge.portable {
+            background: rgba(88, 166, 255, .15);
+            color: var(--blue);
+            border: 1px solid rgba(88, 166, 255, .3);
+        }
+
         /* ---------- 下载卡片 ---------- */
         .dl-grid {
             display: grid;
@@ -631,7 +707,8 @@
                 <span class="term-title">PowerShell</span>
             </div>
             <div class="term-body">
-                <div><span class="prompt">PS&gt;</span> <span class="cmd">ghfast run block-0N/sharebox 35706551502</span>
+                <div><span class="prompt">PS&gt;</span> <span class="cmd">ghfast run block-0N/sharebox
+                        35706551502</span>
                 </div>
                 <div class="out">找到 1 个 artifact</div>
                 <div class="out">=== [1/1] electron-installer (76.3 MB) ===</div>
@@ -645,9 +722,37 @@
     <!-- ============ 下载 ============ -->
     <section id="download" class="wrap">
         <div class="section-label">Download</div>
-        <h2>选择你的平台</h2>
-        <div id="downloads" class="dl-grid">
-            <div class="dl-loading">正在获取最新版本…</div>
+        <h2>选择你的版本</h2>
+
+        <div class="dl-tabs">
+            <button class="dl-tab active" data-tab="cli">
+                <svg viewBox="0 0 16 16">
+                    <path
+                        d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25Zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25ZM7.25 8a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 8Zm-2.22-2.28a.75.75 0 0 1 0 1.06L3.81 8l1.22 1.22a.75.75 0 1 1-1.06 1.06L2.22 8.53a.75.75 0 0 1 0-1.06l1.75-1.75a.75.75 0 0 1 1.06 0Z" />
+                </svg>
+                命令行版 (CLI)
+            </button>
+            <button class="dl-tab" data-tab="gui">
+                <svg viewBox="0 0 16 16">
+                    <path
+                        d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 13.25 15H2.75A1.75 1.75 0 0 1 1 13.25Zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25ZM2.5 4.25a.75.75 0 0 1 .75-.75h9.5a.75.75 0 0 1 0 1.5h-9.5a.75.75 0 0 1-.75-.75ZM2.5 7a.75.75 0 0 1 .75-.75h9.5a.75.75 0 0 1 0 1.5h-9.5A.75.75 0 0 1 2.5 7Zm0 2.75a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 0 1.5h-5.5a.75.75 0 0 1-.75-.75Z" />
+                </svg>
+                桌面版 (GUI)
+            </button>
+        </div>
+
+        <div id="tab-cli" class="dl-tab-panel active">
+            <p class="dl-hint">跨平台，单文件，无依赖。适合终端用户和自动化脚本。支持 Windows / macOS / Linux。</p>
+            <div id="downloads-cli" class="dl-grid">
+                <div class="dl-loading">正在获取最新版本…</div>
+            </div>
+        </div>
+
+        <div id="tab-gui" class="dl-tab-panel">
+            <p class="dl-hint">Windows 桌面应用，可视化操作、进度条、历史记录。推荐使用安装包，安装后开始菜单会显示图标。</p>
+            <div id="downloads-gui" class="dl-grid">
+                <div class="dl-loading">正在获取最新版本…</div>
+            </div>
         </div>
     </section>
 
@@ -751,13 +856,25 @@
 
     <script>
         // ---------- 从 GitHub API 拉最新 Release ----------
-        const REPO = 'block-0N/ghfast';
+        const REPO_CLI = 'block-0N/ghfast';
+        const REPO_GUI = 'block-0N/ghfast-gui';
 
-        const PLATFORMS = [
-            { match: 'windows-amd64', os: 'Windows', arch: 'x64', icon: 'windows' },
-            { match: 'darwin-arm64', os: 'macOS', arch: 'Apple Silicon', icon: 'apple' },
-            { match: 'darwin-amd64', os: 'macOS', arch: 'Intel', icon: 'apple' },
-            { match: 'linux-amd64', os: 'Linux', arch: 'x64', icon: 'linux' },
+        const PLATFORMS_CLI = [
+            { match: n => n.includes('windows-amd64'), os: 'Windows', arch: 'x64', icon: 'windows' },
+            { match: n => n.includes('darwin-arm64'), os: 'macOS', arch: 'Apple Silicon', icon: 'apple' },
+            { match: n => n.includes('darwin-amd64'), os: 'macOS', arch: 'Intel', icon: 'apple' },
+            { match: n => n.includes('linux-amd64'), os: 'Linux', arch: 'x64', icon: 'linux' },
+        ];
+
+        const PLATFORMS_GUI = [
+            {
+                match: n => n.endsWith('-installer.exe'),
+                os: 'Windows', arch: '安装包 · 双击安装', icon: 'windows', badge: '推荐'
+            },
+            {
+                match: n => n === 'ghfast-gui.exe',
+                os: 'Windows', arch: '免安装 · 绿色版', icon: 'windows', badge: '免安装'
+            },
         ];
 
         const ICONS = {
@@ -771,49 +888,69 @@
             return mb.toFixed(2) + ' MB';
         }
 
-        async function loadRelease() {
-            const box = document.getElementById('downloads');
+        async function loadRelease(repo, containerId, platforms) {
+            const box = document.getElementById(containerId);
             try {
-                const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+                const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`);
                 if (!res.ok) throw new Error('API ' + res.status);
                 const data = await res.json();
 
-                // 更新版本号
-                document.getElementById('latest-tag').textContent = data.tag_name;
-
-                // 匹配平台
                 const cards = [];
-                for (const p of PLATFORMS) {
-                    const asset = data.assets.find(a => a.name.includes(p.match));
+                for (const p of platforms) {
+                    const asset = data.assets.find(a => p.match(a.name));
                     if (!asset) continue;
+
+                    const badgeHTML = p.badge
+                        ? `<span class="dl-badge ${p.badge === '推荐' ? 'recommended' : 'portable'}">${p.badge}</span>`
+                        : '';
+
                     cards.push(`
-        <a class="dl-card" href="${asset.browser_download_url}">
-          <div class="dl-os">${ICONS[p.icon]}${p.os}</div>
-          <div class="dl-arch">${p.arch}</div>
-          <div class="dl-size">${fmtSize(asset.size)} ↓</div>
-        </a>
-      `);
+                        <a class="dl-card" href="${asset.browser_download_url}">
+                            <div class="dl-os">${ICONS[p.icon]}<span>${p.os}</span>${badgeHTML}</div>
+                            <div class="dl-arch">${p.arch}</div>
+                            <div class="dl-size">${fmtSize(asset.size)} ↓</div>
+                        </a>
+                    `);
                 }
 
                 if (cards.length === 0) throw new Error('no assets');
                 box.innerHTML = cards.join('');
+                return data.tag_name;
             } catch (e) {
-                // API 失败时回退到 Releases 页面
                 box.innerHTML = `
-      <a class="dl-card" href="https://github.com/${REPO}/releases" target="_blank" rel="noopener">
-        <div class="dl-os">前往 Releases 页面</div>
-        <div class="dl-arch">获取最新版本</div>
-        <div class="dl-size">→</div>
-      </a>
-    `;
+                    <a class="dl-card" href="https://github.com/${repo}/releases" target="_blank" rel="noopener">
+                        <div class="dl-os">前往 Releases 页面</div>
+                        <div class="dl-arch">获取最新版本</div>
+                        <div class="dl-size">→</div>
+                    </a>
+                `;
+                return null;
             }
         }
+
+        async function loadAll() {
+            const cliTag = await loadRelease(REPO_CLI, 'downloads-cli', PLATFORMS_CLI);
+            if (cliTag) {
+                document.getElementById('latest-tag').textContent = cliTag;
+            }
+            loadRelease(REPO_GUI, 'downloads-gui', PLATFORMS_GUI);
+        }
+
+        // 标签页切换
+        document.querySelectorAll('.dl-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.tab;
+                document.querySelectorAll('.dl-tab').forEach(t => t.classList.toggle('active', t === tab));
+                document.querySelectorAll('.dl-tab-panel').forEach(p => {
+                    p.classList.toggle('active', p.id === 'tab-' + target);
+                });
+            });
+        });
 
         // ---------- 代码块复制 ----------
         document.querySelectorAll('.copy-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const block = btn.parentElement;
-                // 提取纯文本（去掉按钮本身）
                 const clone = block.cloneNode(true);
                 clone.querySelector('.copy-btn')?.remove();
                 const text = clone.innerText.trim();
@@ -825,7 +962,7 @@
             });
         });
 
-        loadRelease();
+        loadAll();
     </script>
 
 </body>
