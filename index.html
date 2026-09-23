@@ -860,7 +860,14 @@
         const REPO_GUI = 'block-0N/ghfast-gui';
 
         const PLATFORMS_CLI = [
-            { match: n => n.includes('windows-amd64'), os: 'Windows', arch: 'x64', icon: 'windows' },
+            {
+                match: n => n === 'ghfast-setup.exe',
+                os: 'Windows', arch: '安装包 · 双击安装', icon: 'windows', badge: '推荐'
+            },
+            {
+                match: n => n.includes('windows-amd64'),
+                os: 'Windows', arch: 'x64 · 免安装', icon: 'windows', badge: '免安装'
+            },
             { match: n => n.includes('darwin-arm64'), os: 'macOS', arch: 'Apple Silicon', icon: 'apple' },
             { match: n => n.includes('darwin-amd64'), os: 'macOS', arch: 'Intel', icon: 'apple' },
             { match: n => n.includes('linux-amd64'), os: 'Linux', arch: 'x64', icon: 'linux' },
