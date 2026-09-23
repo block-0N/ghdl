@@ -38,11 +38,27 @@ func main() {
 	setupProxy(rawArgs)
 
 	args := stripGlobalArgs(rawArgs)
+
+	// 如果第一个参数是 URL，走自动解析
+	if len(args) >= 1 && (strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://")) {
+		token, err := getToken(args)
+		if err != nil {
+			fmt.Println("获取 token 失败:", err)
+			os.Exit(1)
+		}
+		if err := handleURL(args[0], token); err != nil {
+			fmt.Println("失败:", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	if len(args) < 2 {
 		fmt.Println("用法:")
 		fmt.Println("  ghdl <owner/repo> <artifact_id>")
 		fmt.Println("  ghdl run <owner/repo> <run_id>")
 		fmt.Println("  ghdl release <owner/repo> <tag> [文件名]")
+		fmt.Println("  ghdl <url>")
 		os.Exit(1)
 	}
 	token, err := getToken(args)
