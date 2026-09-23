@@ -1,5 +1,5 @@
-ghdl.exe
-ghdl-*
+ghfast.exe
+ghfast-*
 *.zip
 *.part*
 test-extract/
