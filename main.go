@@ -61,13 +61,24 @@ func main() {
 		fmt.Println("  ghfast <url>")
 		os.Exit(1)
 	}
-	token, err := getToken(args)
-	if err != nil {
-		fmt.Println("获取 token 失败:", err)
-		fmt.Println("请任选一种方式：")
-		fmt.Println("  1. ghfast ... --token <你的token>")
-		fmt.Println("  2. 设置环境变量 GITHUB_TOKEN")
-		fmt.Println("  3. 安装 gh 并执行 gh auth login")
+	token := getTokenOptional(args)
+
+	// 判断当前命令是否需要 token
+	needsToken := true
+	if len(args) >= 1 {
+		if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
+			if p, err := parseGitHubURL(args[0]); err == nil {
+				if p.Kind == "release-asset" || p.Kind == "release-page" {
+					needsToken = false
+				}
+			}
+		} else if args[0] == "release" {
+			needsToken = false
+		}
+	}
+
+	if needsToken && token == "" {
+		printTokenError()
 		os.Exit(1)
 	}
 
@@ -182,7 +193,9 @@ func main() {
 func getArtifact(repo, id, token string) (*Artifact, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/actions/artifacts/%s", repo, id)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", "token "+token)
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 
 	resp, err := httpClient.Do(req)
@@ -213,7 +226,9 @@ func resolveURL(apiURL, token string) (string, error) {
 		},
 	}
 	req, _ := http.NewRequest("GET", apiURL, nil)
-	req.Header.Set("Authorization", "token "+token)
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 
 	resp, err := client.Do(req)
@@ -490,6 +505,22 @@ func getToken(args []string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
+// getTokenOptional 尝试获取 token，拿不到返回空字符串（不报错）
+func getTokenOptional(args []string) string {
+	t, err := getToken(args)
+	if err != nil {
+		return ""
+	}
+	return t
+}
+
+func printTokenError() {
+	fmt.Println("该操作需要 GitHub token，请任选一种方式：")
+	fmt.Println("  1. ghfast ... --token <你的token>")
+	fmt.Println("  2. 设置环境变量 GITHUB_TOKEN")
+	fmt.Println("  3. 安装 gh 并执行 gh auth login")
+}
+
 // setupProxy 根据命令行参数或环境变量配置代理
 func setupProxy(args []string) {
 	var proxyURL string
@@ -572,7 +603,9 @@ func downloadArtifact(art *Artifact, token string) error {
 func getRunArtifacts(repo, runID, token string) ([]Artifact, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/actions/runs/%s/artifacts", repo, runID)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", "token "+token)
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 
 	resp, err := httpClient.Do(req)
@@ -607,7 +640,9 @@ type ReleaseAsset struct {
 func getReleaseAssets(repo, tag, token string) ([]ReleaseAsset, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/tags/%s", repo, tag)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", "token "+token)
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 
 	resp, err := httpClient.Do(req)
@@ -681,7 +716,9 @@ func resolveAssetURL(repo string, assetID int64, token string) (string, error) {
 		},
 	}
 	req, _ := http.NewRequest("GET", apiURL, nil)
-	req.Header.Set("Authorization", "token "+token)
+	if token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
 	req.Header.Set("Accept", "application/octet-stream") // 关键：告诉 API 返回文件本体
 
 	resp, err := client.Do(req)
