@@ -55,17 +55,17 @@ func main() {
 
 	if len(args) < 2 {
 		fmt.Println("用法:")
-		fmt.Println("  ghdl <owner/repo> <artifact_id>")
-		fmt.Println("  ghdl run <owner/repo> <run_id>")
-		fmt.Println("  ghdl release <owner/repo> <tag> [文件名]")
-		fmt.Println("  ghdl <url>")
+		fmt.Println("  ghfast <owner/repo> <artifact_id>")
+		fmt.Println("  ghfast run <owner/repo> <run_id>")
+		fmt.Println("  ghfast release <owner/repo> <tag> [文件名]")
+		fmt.Println("  ghfast <url>")
 		os.Exit(1)
 	}
 	token, err := getToken(args)
 	if err != nil {
 		fmt.Println("获取 token 失败:", err)
 		fmt.Println("请任选一种方式：")
-		fmt.Println("  1. ghdl ... --token <你的token>")
+		fmt.Println("  1. ghfast ... --token <你的token>")
 		fmt.Println("  2. 设置环境变量 GITHUB_TOKEN")
 		fmt.Println("  3. 安装 gh 并执行 gh auth login")
 		os.Exit(1)
@@ -74,7 +74,7 @@ func main() {
 	// run 子命令：下载该 run 下所有 artifact
 	if args[0] == "run" {
 		if len(args) < 3 {
-			fmt.Println("用法: ghdl run <owner/repo> <run_id>")
+			fmt.Println("用法: ghfast run <owner/repo> <run_id>")
 			os.Exit(1)
 		}
 		repo := args[1]
@@ -104,7 +104,7 @@ func main() {
 	// release 子命令：下载 release 文件
 	if args[0] == "release" {
 		if len(args) < 3 {
-			fmt.Println("用法: ghdl release <owner/repo> <tag> [文件名]")
+			fmt.Println("用法: ghfast release <owner/repo> <tag> [文件名]")
 			os.Exit(1)
 		}
 		repo := args[1]
@@ -126,7 +126,7 @@ func main() {
 			for _, a := range assets {
 				fmt.Printf("  %-50s  %.1f MB\n", a.Name, float64(a.Size)/1024/1024)
 			}
-			fmt.Println("\n用法: ghdl release <owner/repo> <tag> <文件名>")
+			fmt.Println("\n用法: ghfast release <owner/repo> <tag> <文件名>")
 			return
 		}
 
