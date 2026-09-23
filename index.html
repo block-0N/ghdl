@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ghdl — 国内可用的 GitHub 多线程下载器</title>
+    <title>ghfast — 国内可用的 GitHub 多线程下载器</title>
     <meta name="description" content="专为国内网络环境优化的 GitHub 多线程下载器，支持 Artifact、Run 和 Release，8 线程并发、断点续传、链接过期自动恢复。">
     <style>
         :root {
@@ -579,12 +579,12 @@
 
     <nav>
         <div class="nav-inner">
-            <a href="#" class="logo">ghdl</a>
+            <a href="#" class="logo">ghfast</a>
             <div class="nav-links">
                 <a href="#download">下载</a>
                 <a href="#features">特性</a>
                 <a href="#usage">用法</a>
-                <a href="https://github.com/block-0N/ghdl" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://github.com/block-0N/ghfast" target="_blank" rel="noopener">GitHub</a>
             </div>
         </div>
     </nav>
@@ -614,7 +614,7 @@
                 </svg>
                 立即下载
             </a>
-            <a href="https://github.com/block-0N/ghdl" target="_blank" rel="noopener" class="btn btn-ghost">
+            <a href="https://github.com/block-0N/ghfast" target="_blank" rel="noopener" class="btn btn-ghost">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path
                         d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
@@ -631,7 +631,7 @@
                 <span class="term-title">PowerShell</span>
             </div>
             <div class="term-body">
-                <div><span class="prompt">PS&gt;</span> <span class="cmd">ghdl run block-0N/sharebox 35706551502</span>
+                <div><span class="prompt">PS&gt;</span> <span class="cmd">ghfast run block-0N/sharebox 35706551502</span>
                 </div>
                 <div class="out">找到 1 个 artifact</div>
                 <div class="out">=== [1/1] electron-installer (76.3 MB) ===</div>
@@ -702,7 +702,7 @@
                 gh api repos/owner/repo/actions/artifacts --jq <span class="s">'.artifacts[] | {id,
                     name}'</span><br><br>
                 <span class="c"># 下载</span><br>
-                ghdl owner/repo <span class="k">&lt;artifact_id&gt;</span>
+                ghfast owner/repo <span class="k">&lt;artifact_id&gt;</span>
             </div>
         </div>
 
@@ -710,7 +710,7 @@
             <div class="usage-title">下载某个 Run 下的全部产物</div>
             <div class="code-block">
                 <button class="copy-btn">复制</button>
-                ghdl run owner/repo <span class="k">&lt;run_id&gt;</span>
+                ghfast run owner/repo <span class="k">&lt;run_id&gt;</span>
             </div>
         </div>
 
@@ -719,9 +719,9 @@
             <div class="code-block">
                 <button class="copy-btn">复制</button>
                 <span class="c"># 不写文件名，列出所有附件</span><br>
-                ghdl release owner/repo <span class="k">&lt;tag&gt;</span><br><br>
+                ghfast release owner/repo <span class="k">&lt;tag&gt;</span><br><br>
                 <span class="c"># 写文件名，支持模糊匹配</span><br>
-                ghdl release owner/repo <span class="k">&lt;tag&gt;</span> windows
+                ghfast release owner/repo <span class="k">&lt;tag&gt;</span> windows
             </div>
         </div>
 
@@ -738,20 +738,20 @@
     <!-- ============ 页脚 ============ -->
     <footer>
         <div class="footer-inner">
-            <div>ghdl · MIT License</div>
+            <div>ghfast · MIT License</div>
             <div>
-                <a href="https://github.com/block-0N/ghdl" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://github.com/block-0N/ghfast" target="_blank" rel="noopener">GitHub</a>
                 &nbsp;·&nbsp;
-                <a href="https://github.com/block-0N/ghdl/releases" target="_blank" rel="noopener">Releases</a>
+                <a href="https://github.com/block-0N/ghfast/releases" target="_blank" rel="noopener">Releases</a>
                 &nbsp;·&nbsp;
-                <a href="https://github.com/block-0N/ghdl/issues" target="_blank" rel="noopener">Issues</a>
+                <a href="https://github.com/block-0N/ghfast/issues" target="_blank" rel="noopener">Issues</a>
             </div>
         </div>
     </footer>
 
     <script>
         // ---------- 从 GitHub API 拉最新 Release ----------
-        const REPO = 'block-0N/ghdl';
+        const REPO = 'block-0N/ghfast';
 
         const PLATFORMS = [
             { match: 'windows-amd64', os: 'Windows', arch: 'x64', icon: 'windows' },
