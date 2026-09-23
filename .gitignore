@@ -3,3 +3,4 @@ ghfast-*
 *.zip
 *.part*
 test-extract/
+*.Setup.*

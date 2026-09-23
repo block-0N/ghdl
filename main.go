@@ -419,6 +419,15 @@ func mergeParts(parts int, outFile string) error {
 
 func monitor(outFile string, total int64, done <-chan struct{}) {
 	start := time.Now()
+
+	// 记录启动时已有的分片大小，续传时扣除
+	var initial int64
+	for i := 0; i < parts; i++ {
+		if fi, err := os.Stat(fmt.Sprintf("%s.part%d", outFile, i)); err == nil {
+			initial += fi.Size()
+		}
+	}
+
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -434,7 +443,14 @@ func monitor(outFile string, total int64, done <-chan struct{}) {
 				}
 			}
 			pct := float64(sum) / float64(total) * 100
-			speed := float64(sum) / time.Since(start).Seconds() / 1024
+
+			// 只算本次运行新增的部分
+			delta := sum - initial
+			if delta < 0 {
+				delta = 0
+			}
+			speed := float64(delta) / time.Since(start).Seconds() / 1024
+
 			fmt.Printf("\r  %.1f%%  %.1f/%.1f MB  %.0f KB/s",
 				pct, float64(sum)/1024/1024, float64(total)/1024/1024, speed)
 		}
