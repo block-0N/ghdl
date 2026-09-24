@@ -52,8 +52,6 @@ Filename: "{app}\{#MyAppExeName}"; Description: "查看 ghfast 用法"; Flags: p
 [Code]
 const
     EnvironmentKey = 'Environment';
-    HWND_BROADCAST = $FFFF;
-    WM_SETTINGCHANGE = $001A;
 
 procedure EnvAddPath(Path: string);
 var
