@@ -100,11 +100,8 @@ begin
 end;
 
 procedure BroadcastEnvironmentChange();
-var
-    EnvStr: string;
 begin
-    EnvStr := 'Environment';
-    SendMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, Longint(PAnsiChar(EnvStr)));
+    SendMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 0);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
