@@ -42,6 +42,12 @@ Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: 
 [Files]
 Source: "ghfast-windows-amd64.exe"; DestDir: "{app}"; DestName: "{#MyAppExeName}"; Flags: ignoreversion
 
+[Registry]
+Root: HKLM; \
+    Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; \
+    Tasks: addtopath; Check: NeedsAddPath('{app}')
+
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\卸载 {#MyAppName}"; Filename: "{uninstallexe}"
@@ -52,80 +58,47 @@ Filename: "{app}\{#MyAppExeName}"; Description: "查看 ghfast 用法"; Flags: p
 
 [Code]
 const
-    EnvironmentKey = 'Environment';
-    WM_SETTINGCHANGE = $001A;
-    SMTO_ABORTIFHUNG = $0002;
+    EnvKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
 
-procedure EnvAddPath(Path: string);
+function NeedsAddPath(Param: string): Boolean;
 var
-    Paths: string;
+    OrigPath: string;
 begin
-    if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths)
-    then Paths := '';
-
-    if Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';') > 0 then exit;
-
-    if Paths = '' then
-        Paths := Path
-    else
-        Paths := Paths + ';' + Path;
-
-    if RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths)
-    then Log(Format('已添加 [%s] 到系统 PATH', [Path]))
-    else Log(Format('添加 [%s] 到系统 PATH 失败', [Path]));
-end;
-
-procedure EnvRemovePath(Path: string);
-var
-    Paths: string;
-    P: Integer;
-begin
-    if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths) then
+    if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvKey, 'Path', OrigPath) then
+    begin
+        Result := True;
         exit;
-
-    P := Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';');
-    if P > 0 then
-        Delete(Paths, P - 1, Length(Path) + 1)
-    else
-    begin
-        if Pos(Uppercase(Path) + ';', Uppercase(Paths) + ';') = 1 then
-            Delete(Paths, 1, Length(Path) + 1)
-        else
-        begin
-            P := Pos(';' + Uppercase(Path), Uppercase(Paths));
-            if (P > 0) and (P + Length(Path) = Length(Paths)) then
-                Delete(Paths, P, Length(Path) + 1);
-        end;
     end;
-
-    RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths);
-end;
-
-procedure BroadcastEnvironmentChange();
-var
-    Dummy: DWORD;
-begin
-    SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 0,
-        SMTO_ABORTIFHUNG, 5000, Dummy);
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
-begin
-    if CurStep = ssPostInstall then
-    begin
-        if WizardIsTaskSelected('addtopath') then
-        begin
-            EnvAddPath(ExpandConstant('{app}'));
-            BroadcastEnvironmentChange();
-        end;
-    end;
+    Result := Pos(';' + Uppercase(Param) + ';', ';' + Uppercase(OrigPath) + ';') = 0;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+    OrigPath, NewPath, AppDir: string;
+    P: Integer;
 begin
     if CurUninstallStep = usPostUninstall then
     begin
-        EnvRemovePath(ExpandConstant('{app}'));
-        BroadcastEnvironmentChange();
+        AppDir := ExpandConstant('{app}');
+        if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvKey, 'Path', OrigPath) then
+            exit;
+
+        P := Pos(';' + Uppercase(AppDir) + ';', ';' + Uppercase(OrigPath) + ';');
+        if P > 0 then
+            Delete(OrigPath, P, Length(AppDir) + 1)
+        else
+        begin
+            P := Pos(Uppercase(AppDir) + ';', Uppercase(OrigPath) + ';');
+            if P = 1 then
+                Delete(OrigPath, 1, Length(AppDir) + 1)
+            else
+            begin
+                P := Pos(';' + Uppercase(AppDir), Uppercase(OrigPath));
+                if (P > 0) and (P + Length(AppDir) = Length(OrigPath)) then
+                    Delete(OrigPath, P, Length(AppDir) + 1);
+            end;
+        end;
+
+        RegWriteExpandStringValue(HKEY_LOCAL_MACHINE, EnvKey, 'Path', OrigPath);
     end;
 end;
