@@ -23,6 +23,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 OutputDir=dist
 OutputBaseFilename=ghfast-setup
+SetupIconFile=ghfast.ico
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
