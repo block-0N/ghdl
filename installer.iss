@@ -17,10 +17,10 @@ AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
-DefaultDirName={localappdata}\Programs\{#MyAppName}
+DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-PrivilegesRequired=lowest
+PrivilegesRequired=admin
 OutputDir=dist
 OutputBaseFilename=ghfast-setup
 Compression=lzma2
@@ -35,7 +35,7 @@ Name: "chinesesimplified"; MessagesFile: "ChineseSimplified.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "addtopath"; Description: "将 ghfast 加入 PATH 环境变量（推荐）"; GroupDescription: "安装选项："; Flags: checkedonce
+Name: "addtopath"; Description: "将 ghfast 加入系统 PATH 环境变量（推荐）"; GroupDescription: "安装选项："; Flags: checkedonce
 Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: "安装选项："; Flags: unchecked
 
 [Files]
@@ -58,7 +58,7 @@ procedure EnvAddPath(Path: string);
 var
     Paths: string;
 begin
-    if not RegQueryStringValue(HKEY_CURRENT_USER, EnvironmentKey, 'Path', Paths)
+    if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths)
     then Paths := '';
 
     if Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';') > 0 then exit;
@@ -68,9 +68,9 @@ begin
     else
         Paths := Paths + ';' + Path;
 
-    if RegWriteStringValue(HKEY_CURRENT_USER, EnvironmentKey, 'Path', Paths)
-    then Log(Format('已添加 [%s] 到 PATH', [Path]))
-    else Log(Format('添加 [%s] 到 PATH 失败', [Path]));
+    if RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths)
+    then Log(Format('已添加 [%s] 到系统 PATH', [Path]))
+    else Log(Format('添加 [%s] 到系统 PATH 失败', [Path]));
 end;
 
 procedure EnvRemovePath(Path: string);
@@ -78,7 +78,7 @@ var
     Paths: string;
     P: Integer;
 begin
-    if not RegQueryStringValue(HKEY_CURRENT_USER, EnvironmentKey, 'Path', Paths) then
+    if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths) then
         exit;
 
     P := Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';');
@@ -96,7 +96,7 @@ begin
         end;
     end;
 
-    RegWriteStringValue(HKEY_CURRENT_USER, EnvironmentKey, 'Path', Paths);
+    RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths);
 end;
 
 procedure BroadcastEnvironmentChange();
