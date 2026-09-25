@@ -54,6 +54,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "查看 ghfast 用法"; Flags: p
 const
     EnvironmentKey = 'Environment';
     WM_SETTINGCHANGE = $001A;
+    SMTO_ABORTIFHUNG = $0002;
 
 procedure EnvAddPath(Path: string);
 var
@@ -101,8 +102,11 @@ begin
 end;
 
 procedure BroadcastEnvironmentChange();
+var
+    Dummy: DWORD;
 begin
-    SendMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 0);
+    SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 0,
+        SMTO_ABORTIFHUNG, 5000, Dummy);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
